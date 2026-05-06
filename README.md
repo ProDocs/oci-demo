@@ -127,6 +127,30 @@ O binario final esperado fica em `target/oci-ai-review-demo`.
 
 ## Como demonstrar PASS, WARN e BLOCK
 
+### Roteiro curto de demo no OCI DevOps
+
+Para apresentacao ao vivo, o melhor roteiro e fazer duas execucoes do mesmo pipeline:
+
+1. **Execucao de sucesso**
+   - `AI_REVIEW_MODE=mock`
+   - `AI_REVIEW_SCENARIO=pass`
+   - resultado esperado:
+     - `ai-review.json` com `PASS`
+     - gate libera o fluxo
+     - native build com GraalVM 21 acontece
+     - build termina com sucesso
+
+2. **Execucao de falha**
+   - `AI_REVIEW_MODE=mock`
+   - `AI_REVIEW_SCENARIO=block`
+   - resultado esperado:
+     - `ai-review.json` com `BLOCK`
+     - gate interrompe o pipeline antes da compilacao
+     - build termina como failed
+     - `dist/ai-review.json` e `dist/demo-bundle.zip` continuam sendo gerados
+
+Esse roteiro e o mais simples porque demonstra o valor do gate por IA sem depender de mudanca de codigo entre um run e outro.
+
 ### Jeito mais simples para live demo
 
 Mantenha `AI_REVIEW_MODE=mock` e altere apenas `AI_REVIEW_SCENARIO` no build run:
@@ -138,9 +162,20 @@ Mantenha `AI_REVIEW_MODE=mock` e altere apenas `AI_REVIEW_SCENARIO` no build run
 
 ### Jeito mais visual com mudanca de codigo
 
-- PASS: use o baseline atual em `src/main/java`.
-- WARN: copie `examples/scenarios/warn/GreetingService.java` sobre o service atual.
-- BLOCK: copie `examples/scenarios/block/GreetingController.java` sobre o controller atual.
+- PASS: rode `bash scripts/apply-scenario.sh pass`.
+- WARN: rode `bash scripts/apply-scenario.sh warn`.
+- BLOCK: rode `bash scripts/apply-scenario.sh block`.
+
+Depois execute a revisao com `--scenario auto` para a IA inferir o resultado a partir do codigo atual:
+
+```bash
+python3 -m tools.ai_review.main \
+  --guidelines docs/architecture-guidelines.md \
+  --source-dir src/main/java \
+  --output ai-review.json \
+  --mode mock \
+  --scenario auto
+```
 
 Detalhes adicionais estao em `examples/scenarios/README.md`.
 
@@ -161,10 +196,11 @@ O fluxo e:
 7. Publica `dist/ai-review.json` e `dist/demo-bundle.zip`.
 
 Veja `docs/oci-devops-setup.md` para o setup recomendado.
+Para o passo a passo tela por tela da Console OCI, veja `docs/oci-console-click-runbook.md`.
 
 ## Oracle Generative AI real
 
-Quando quiser trocar o mock por integracao real no OCI DevOps, configure as variaveis abaixo no Build Run ou no ambiente do runner:
+Quando quiser trocar o mock por integracao real no OCI DevOps, configure as variaveis abaixo em um branch dedicado do `build_spec.yaml` ou no ambiente do runner:
 
 ```bash
 export AI_REVIEW_MODE=oci

@@ -33,15 +33,7 @@ steps:
         --output ai-review.json
       cp ai-review.json dist/ai-review.json
       cat ai-review.json
-      export AI_REVIEW_RESULT="$(
-        python3 - "ai-review.json" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], encoding="utf-8") as file_handle:
-    print(json.load(file_handle)["result"])
-PY
-      )"
+      export AI_REVIEW_RESULT="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["result"])' ai-review.json)"
 
   - type: Command
     name: "Gate native build"
