@@ -20,13 +20,21 @@ steps:
     name: "Prepare workspace"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
+      echo "Working directory: $(pwd)"
       mkdir -p dist
       python3 --version
+      python3 -c 'import importlib.util; print("oci-sdk=" + ("present" if importlib.util.find_spec("oci") else "missing"))'
 
   - type: Command
     name: "AI architecture review"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
+      echo "Working directory: $(pwd)"
+      test -f docs/architecture-guidelines.md
+      test -d src/main/java
+      test -f tools/ai_review/main.py
       python3 -m tools.ai_review.main \
         --guidelines docs/architecture-guidelines.md \
         --source-dir src/main/java \
@@ -39,12 +47,14 @@ steps:
     name: "Gate native build"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
       bash scripts/gate-ai-review.sh ai-review.json
     onFailure:
       - type: Command
         name: "Package blocked artifacts"
         command: |
           set -euo pipefail
+          cd "${OCI_PRIMARY_SOURCE_DIR}"
           export BUILD_OUTCOME=BLOCKED
           bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
 
@@ -52,6 +62,7 @@ steps:
     name: "Install GraalVM 21"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
       yum -y install "${GRAALVM_PACKAGE}"
       export JAVA_HOME="${GRAALVM_HOME}"
       export PATH="${JAVA_HOME}/bin:${PATH}"
@@ -62,6 +73,7 @@ steps:
         name: "Package artifacts after GraalVM setup failure"
         command: |
           set -euo pipefail
+          cd "${OCI_PRIMARY_SOURCE_DIR}"
           export BUILD_OUTCOME=GRAALVM_SETUP_FAILED
           bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
 
@@ -69,6 +81,7 @@ steps:
     name: "Build native executable"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
       export JAVA_HOME="${GRAALVM_HOME}"
       export PATH="${JAVA_HOME}/bin:${PATH}"
       mvn -version
@@ -78,6 +91,7 @@ steps:
         name: "Package artifacts after native build failure"
         command: |
           set -euo pipefail
+          cd "${OCI_PRIMARY_SOURCE_DIR}"
           export BUILD_OUTCOME=NATIVE_BUILD_FAILED
           bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
 
@@ -85,6 +99,7 @@ steps:
     name: "Package demo artifacts"
     command: |
       set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
       export BUILD_OUTCOME=SUCCESS
       bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
 
