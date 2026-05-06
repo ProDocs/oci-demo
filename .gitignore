@@ -1,0 +1,5 @@
+target/
+dist/
+ai-review.json
+*.log
+

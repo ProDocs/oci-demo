@@ -1,0 +1,105 @@
+version: 0.1
+component: build
+timeoutInSeconds: 3600
+runAs: root
+shell: bash
+
+env:
+  variables:
+    AI_REVIEW_MODE: "mock"
+    AI_REVIEW_SCENARIO: "auto"
+    OCI_GENAI_AUTH_MODE: "resource_principal"
+    GRAALVM_PACKAGE: "graalvm-21-native-image"
+    GRAALVM_HOME: "/usr/lib64/graalvm/graalvm-java21"
+  exportedVariables:
+    - AI_REVIEW_RESULT
+    - BUILD_OUTCOME
+
+steps:
+  - type: Command
+    name: "Prepare workspace"
+    command: |
+      set -euo pipefail
+      mkdir -p dist
+      python3 --version
+
+  - type: Command
+    name: "AI architecture review"
+    command: |
+      set -euo pipefail
+      python3 -m tools.ai_review.main \
+        --guidelines docs/architecture-guidelines.md \
+        --source-dir src/main/java \
+        --output ai-review.json
+      cp ai-review.json dist/ai-review.json
+      cat ai-review.json
+      export AI_REVIEW_RESULT="$(
+        python3 - "ai-review.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as file_handle:
+    print(json.load(file_handle)["result"])
+PY
+      )"
+
+  - type: Command
+    name: "Gate native build"
+    command: |
+      set -euo pipefail
+      bash scripts/gate-ai-review.sh ai-review.json
+    onFailure:
+      - type: Command
+        name: "Package blocked artifacts"
+        command: |
+          set -euo pipefail
+          export BUILD_OUTCOME=BLOCKED
+          bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
+
+  - type: Command
+    name: "Install GraalVM 21"
+    command: |
+      set -euo pipefail
+      yum -y install "${GRAALVM_PACKAGE}"
+      export JAVA_HOME="${GRAALVM_HOME}"
+      export PATH="${JAVA_HOME}/bin:${PATH}"
+      java -version
+      native-image --version
+    onFailure:
+      - type: Command
+        name: "Package artifacts after GraalVM setup failure"
+        command: |
+          set -euo pipefail
+          export BUILD_OUTCOME=GRAALVM_SETUP_FAILED
+          bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
+
+  - type: Command
+    name: "Build native executable"
+    command: |
+      set -euo pipefail
+      export JAVA_HOME="${GRAALVM_HOME}"
+      export PATH="${JAVA_HOME}/bin:${PATH}"
+      mvn -version
+      mvn -Pnative -DskipTests package
+    onFailure:
+      - type: Command
+        name: "Package artifacts after native build failure"
+        command: |
+          set -euo pipefail
+          export BUILD_OUTCOME=NATIVE_BUILD_FAILED
+          bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
+
+  - type: Command
+    name: "Package demo artifacts"
+    command: |
+      set -euo pipefail
+      export BUILD_OUTCOME=SUCCESS
+      bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
+
+outputArtifacts:
+  - name: ai-review-json
+    type: BINARY
+    location: dist/ai-review.json
+  - name: demo-bundle
+    type: BINARY
+    location: dist/demo-bundle.zip
