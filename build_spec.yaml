@@ -9,8 +9,7 @@ env:
     AI_REVIEW_MODE: "mock"
     AI_REVIEW_SCENARIO: "auto"
     OCI_GENAI_AUTH_MODE: "resource_principal"
-    GRAALVM_PACKAGE: "graalvm-21-native-image"
-    GRAALVM_HOME: "/usr/lib64/graalvm/graalvm-java21"
+    JAVA_HOME: "/usr/lib64/graalvm/graalvm-java21"
   exportedVariables:
     - AI_REVIEW_RESULT
     - BUILD_OUTCOME
@@ -63,8 +62,21 @@ steps:
     command: |
       set -euo pipefail
       cd "${OCI_PRIMARY_SOURCE_DIR}"
-      yum -y install "${GRAALVM_PACKAGE}"
-      export JAVA_HOME="${GRAALVM_HOME}"
+      yum -y install graalvm-21-native-image
+    onFailure:
+      - type: Command
+        name: "Package artifacts after GraalVM install failure"
+        command: |
+          set -euo pipefail
+          cd "${OCI_PRIMARY_SOURCE_DIR}"
+          export BUILD_OUTCOME=GRAALVM_SETUP_FAILED
+          bash scripts/package-demo-bundle.sh "${BUILD_OUTCOME}"
+
+  - type: Command
+    name: "Set GraalVM PATH"
+    command: |
+      set -euo pipefail
+      cd "${OCI_PRIMARY_SOURCE_DIR}"
       export PATH="${JAVA_HOME}/bin:${PATH}"
       java -version
       native-image --version
@@ -82,7 +94,6 @@ steps:
     command: |
       set -euo pipefail
       cd "${OCI_PRIMARY_SOURCE_DIR}"
-      export JAVA_HOME="${GRAALVM_HOME}"
       export PATH="${JAVA_HOME}/bin:${PATH}"
       mvn -version
       mvn -Pnative -DskipTests package

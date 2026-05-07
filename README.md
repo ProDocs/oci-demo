@@ -239,5 +239,5 @@ export OCI_GENAI_API_KEY="<api-key>"
 - A demo envia **codigo relevante** para a IA, nao diff Git, para manter o OCI DevOps simples.
 - O build runner esperado e Oracle Linux com `yum`.
 - O exemplo assume Oracle GraalVM for JDK 21 instalado pelo pacote `graalvm-21-native-image`.
-- Se o seu tenancy usar outro pacote, ajuste apenas `GRAALVM_PACKAGE` e `GRAALVM_HOME`.
+- O build spec instala `graalvm-21-native-image` e usa `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`.
 - No modo `oci`, a demo usa OCI Python SDK com IAM auth como caminho principal e API key apenas como fallback legado.

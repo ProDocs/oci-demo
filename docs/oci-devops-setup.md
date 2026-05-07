@@ -35,8 +35,7 @@ Se o seu projeto DevOps ja esta conectado ao GitHub, use a conexao GitHub existe
 | `OCI_GENAI_ENDPOINT` | Endpoint completo do chat completions, apenas para o fallback `api_key` |
 | `OCI_GENAI_MODEL` | Modelo Oracle Generative AI a ser usado |
 | `OCI_GENAI_API_KEY` | API key do Oracle Generative AI, apenas para fallback legado |
-| `GRAALVM_PACKAGE` | RPM do Oracle GraalVM for JDK 21 instalado via `yum` no build runner |
-| `GRAALVM_HOME` | Caminho do Oracle GraalVM for JDK 21 no build runner |
+| `JAVA_HOME` | Caminho do Oracle GraalVM for JDK 21 no build runner |
 
 ## Mapeamento do fluxo
 
@@ -80,4 +79,4 @@ Se voce quiser simplificar o primeiro setup em sandbox, pode usar uma policy mai
 - Para a demo real com Oracle Generative AI no OCI DevOps, mude para `AI_REVIEW_MODE=oci`, `OCI_GENAI_AUTH_MODE=resource_principal` e preencha endpoint, compartment e modelo.
 - Para rodar localmente na sua maquina, prefira `OCI_GENAI_AUTH_MODE=user_principal`.
 - Para rodar em uma OCI Compute fora do DevOps, use `OCI_GENAI_AUTH_MODE=instance_principal`.
-- Se o seu runner OCI usar um pacote ou caminho diferente do exemplo de Oracle GraalVM for JDK 21, ajuste `GRAALVM_PACKAGE` e `GRAALVM_HOME` sem mudar o restante da pipeline.
+- O build spec instala o RPM `graalvm-21-native-image` e usa `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`.

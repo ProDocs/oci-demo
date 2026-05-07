@@ -65,8 +65,7 @@ Use o caminho mais seguro para a apresentacao:
 AI_REVIEW_MODE=mock
 AI_REVIEW_SCENARIO=pass
 OCI_GENAI_AUTH_MODE=resource_principal
-GRAALVM_PACKAGE=graalvm-21-native-image
-GRAALVM_HOME=/usr/lib64/graalvm/graalvm-java21
+JAVA_HOME=/usr/lib64/graalvm/graalvm-java21
 ```
 
 Depois repita mudando apenas:
@@ -84,8 +83,7 @@ OCI_GENAI_AUTH_MODE=resource_principal
 OCI_GENAI_INFERENCE_ENDPOINT=https://inference.generativeai.<regiao>.oci.oraclecloud.com
 OCI_GENAI_COMPARTMENT_OCID=<compartment_ocid>
 OCI_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
-GRAALVM_PACKAGE=graalvm-21-native-image
-GRAALVM_HOME=/usr/lib64/graalvm/graalvm-java21
+JAVA_HOME=/usr/lib64/graalvm/graalvm-java21
 ```
 
 ## 8. O que o stage faz
