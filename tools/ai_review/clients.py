@@ -167,7 +167,7 @@ def _import_oci_sdk():
     except ImportError as exc:
         raise RuntimeError(
             "OCI Python SDK nao encontrado no ambiente atual. "
-            "Adicione `python3 -m pip install oci` ao build_spec ou disponibilize o pacote no PYTHONPATH. "
+            "Adicione `yum install python3.11-oci-sdk` ou `python3 -m pip install oci` ao build_spec. "
             "Localmente, instale com `python3 -m pip install oci`."
         ) from exc
 
