@@ -1,0 +1,77 @@
+version: 1.0
+component: deployment
+runAs: root
+shell: bash
+
+env:
+  variables:
+    APP_NAME: ai-review
+    STAGING_DIR: /var/ocarun_staging/ai-review
+    PROD_DIR: /opt/ai-review
+    BIN_NAME: oci-ai-review-demo
+    JSON_NAME: ai-review.json
+    HEALTHCHECK_URL: http://127.0.0.1:8080/api/greetings
+
+files:
+  - source: /oci-ai-review-demo/oci-ai-review-demo
+    destination: /var/ocarun_staging/ai-review
+
+  - source: /oci-ai-review-demo/ai-review.json
+    destination: /var/ocarun_staging/ai-review
+
+steps:
+  - stepType: Command
+    name: Prepare directories
+    command: |
+      set -e
+
+      mkdir -p "${PROD_DIR}"
+      mkdir -p "${STAGING_DIR}"
+
+      chmod 755 "${PROD_DIR}"
+
+  - stepType: Command
+    name: Stop current application
+    command: |
+      set +e
+
+      pkill -f "${PROD_DIR}/${BIN_NAME}"
+
+      sleep 3
+
+      echo "Old process stopped"
+
+  - stepType: Command
+    name: Deploy new artifacts
+    command: |
+      set -e
+
+      cp -f "${STAGING_DIR}/${BIN_NAME}" "${PROD_DIR}/${BIN_NAME}"
+      cp -f "${STAGING_DIR}/${JSON_NAME}" "${PROD_DIR}/${JSON_NAME}"
+
+      chmod +x "${PROD_DIR}/${BIN_NAME}"
+
+      ls -lah "${PROD_DIR}"
+
+  - stepType: Command
+    name: Start application
+    command: |
+      set -e
+
+      cd "${PROD_DIR}"
+
+      nohup "./${BIN_NAME}" > "/var/log/${APP_NAME}.log" 2>&1 &
+
+      sleep 10
+
+      pgrep -f "${PROD_DIR}/${BIN_NAME}"
+
+  - stepType: Command
+    name: Health check
+    command: |
+      set -e
+
+      curl --fail --silent "${HEALTHCHECK_URL}"
+
+      echo ""
+      echo "Application health check passed"
