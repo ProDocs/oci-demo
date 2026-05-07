@@ -166,8 +166,8 @@ def _import_oci_sdk():
         import oci
     except ImportError as exc:
         raise RuntimeError(
-            "OCI Python SDK nao encontrado. "
-            "No OCI DevOps Managed Build ele ja vem disponivel. "
+            "OCI Python SDK nao encontrado no ambiente atual. "
+            "Adicione `python3 -m pip install oci` ao build_spec ou disponibilize o pacote no PYTHONPATH. "
             "Localmente, instale com `python3 -m pip install oci`."
         ) from exc
 
