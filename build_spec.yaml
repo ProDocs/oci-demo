@@ -64,8 +64,19 @@ steps:
       cd "${OCI_PRIMARY_SOURCE_DIR}"
       cat /etc/os-release
       yum repolist
+      yum repolist all | grep -E 'ol8_codeready_builder|ol8_oci_included' || true
       yum list "graalvm-21*" || true
-      yum -y install graalvm-21-native-image
+      yum -y install \
+        --enablerepo=ol8_codeready_builder \
+        gcc \
+        glibc-devel \
+        glibc-static \
+        libstdc++-static \
+        zlib-devel \
+        zlib-static
+      yum -y install \
+        --enablerepo=ol8_codeready_builder \
+        graalvm-21-native-image
     onFailure:
       - type: Command
         name: "Package artifacts after GraalVM install failure"

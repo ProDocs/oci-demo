@@ -80,3 +80,4 @@ Se voce quiser simplificar o primeiro setup em sandbox, pode usar uma policy mai
 - Para rodar localmente na sua maquina, prefira `OCI_GENAI_AUTH_MODE=user_principal`.
 - Para rodar em uma OCI Compute fora do DevOps, use `OCI_GENAI_AUTH_MODE=instance_principal`.
 - O build spec instala o RPM `graalvm-21-native-image` e usa `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`.
+- No OCI DevOps Managed Build em Oracle Linux 8, o build spec tambem instala `glibc-static`, `libstdc++-static` e `zlib-static` com `--enablerepo=ol8_codeready_builder`, porque o RPM do `native-image` depende desses pacotes.
