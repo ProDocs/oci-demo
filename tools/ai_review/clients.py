@@ -90,23 +90,26 @@ class OciSdkReviewClient(ReviewClient):
 
         system_prompt, user_prompt = build_prompt_parts(context)
         models = oci.generative_ai_inference.models
-        chat_request = models.GenericChatRequest(
-            api_format=models.GenericChatRequest.API_FORMAT_GENERIC,
-            messages=[
-                models.SystemMessage(content=[models.TextContent(text=system_prompt)]),
-                models.UserMessage(content=[models.TextContent(text=user_prompt)]),
-            ],
-            temperature=0,
-            max_completion_tokens=MAX_COMPLETION_TOKENS,
-        )
         chat_details = models.ChatDetails(
             compartment_id=self.compartment_id,
             serving_mode=models.OnDemandServingMode(model_id=self.model),
-            chat_request=chat_request,
+            chat_request=_build_generic_chat_request(models, system_prompt, user_prompt),
         )
 
         print("[AI_REVIEW] invoking OCI Generative AI chat", file=sys.stderr, flush=True)
-        response = client.chat(chat_details)
+        try:
+            response = client.chat(chat_details)
+        except Exception as exc:  # noqa: BLE001
+            if not _is_request_type_mismatch_error(exc):
+                raise
+
+            print(
+                "[AI_REVIEW] generic request rejected by serving model; retrying as cohere",
+                file=sys.stderr,
+                flush=True,
+            )
+            chat_details.chat_request = _build_cohere_chat_request(models, system_prompt, user_prompt)
+            response = client.chat(chat_details)
         _log_oci_sdk_response_metadata(response)
         print("[AI_REVIEW] OCI Generative AI chat completed", file=sys.stderr, flush=True)
         assistant_text = _extract_text_from_oci_sdk_response(response.data)
@@ -174,6 +177,36 @@ def _import_oci_sdk():
         ) from exc
 
     return oci
+
+
+def _build_generic_chat_request(models, system_prompt: str, user_prompt: str):
+    return models.GenericChatRequest(
+        api_format=models.GenericChatRequest.API_FORMAT_GENERIC,
+        messages=[
+            models.SystemMessage(content=[models.TextContent(text=system_prompt)]),
+            models.UserMessage(content=[models.TextContent(text=user_prompt)]),
+        ],
+        temperature=0,
+        max_completion_tokens=MAX_COMPLETION_TOKENS,
+    )
+
+
+def _build_cohere_chat_request(models, system_prompt: str, user_prompt: str):
+    chat_request = models.CohereChatRequest()
+    chat_request.preamble_override = system_prompt
+    chat_request.message = user_prompt
+    chat_request.temperature = 0
+    chat_request.max_tokens = MAX_COMPLETION_TOKENS
+    chat_request.top_p = 0.75
+    chat_request.top_k = 0
+    chat_request.frequency_penalty = 0
+    chat_request.safety_mode = "CONTEXTUAL"
+    return chat_request
+
+
+def _is_request_type_mismatch_error(exc: Exception) -> bool:
+    error_text = str(exc)
+    return "Chat request type does not match serving model" in error_text
 
 
 def _build_oci_inference_client(oci, inference_endpoint: str, auth_mode: str, config_file: str, config_profile: str):
@@ -245,6 +278,10 @@ def _extract_text_from_oci_sdk_response(chat_result) -> str:
     chat_response = getattr(chat_result, "chat_response", None)
     if chat_response is None:
         raise RuntimeError("Resposta OCI SDK sem chat_response.")
+
+    direct_response_text = getattr(chat_response, "text", None)
+    if isinstance(direct_response_text, str) and direct_response_text.strip():
+        return direct_response_text
 
     choices = getattr(chat_response, "choices", None) or []
     if not choices:
