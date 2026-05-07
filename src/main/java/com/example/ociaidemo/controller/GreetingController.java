@@ -1,23 +1,17 @@
 package com.example.ociaidemo.controller;
 
-import com.example.ociaidemo.model.GreetingResponse;
-import com.example.ociaidemo.service.GreetingService;
+import com.example.ociaidemo.repository.GreetingRepository;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public final class GreetingController implements HttpHandler {
 
-    private final GreetingService greetingService;
-
-    public GreetingController(GreetingService greetingService) {
-        this.greetingService = greetingService;
-    }
+    private final GreetingRepository greetingRepository = new GreetingRepository();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -27,8 +21,9 @@ public final class GreetingController implements HttpHandler {
         }
 
         String name = extractName(exchange.getRequestURI().getRawQuery());
-        GreetingResponse response = greetingService.buildGreeting(name);
-        byte[] payload = response.toJson().getBytes(StandardCharsets.UTF_8);
+        String prefix = greetingRepository.findGreetingPrefix(name);
+        String response = "{\"message\":\"" + prefix + ", " + name + "!\"}";
+        byte[] payload = response.getBytes(StandardCharsets.UTF_8);
 
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, payload.length);
@@ -38,23 +33,16 @@ public final class GreetingController implements HttpHandler {
     }
 
     private String extractName(String rawQuery) {
-        if (rawQuery == null || rawQuery.trim().isEmpty()) {
+        if (rawQuery == null || rawQuery.isBlank()) {
             return "OCI DevOps";
         }
 
         return Arrays.stream(rawQuery.split("&"))
                 .map(pair -> pair.split("=", 2))
                 .filter(parts -> parts.length == 2 && "name".equals(parts[0]))
-                .map(parts -> decode(parts[1]))
+                .map(parts -> URLDecoder.decode(parts[1], StandardCharsets.UTF_8))
                 .findFirst()
                 .orElse("OCI DevOps");
     }
-
-    private String decode(String value) {
-        try {
-            return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException exception) {
-            throw new IllegalStateException("UTF-8 should always be available", exception);
-        }
-    }
 }
+
