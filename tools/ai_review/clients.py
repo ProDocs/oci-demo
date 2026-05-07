@@ -10,6 +10,8 @@ from .models import ReviewContext, ReviewPayload
 from .prompt_builder import build_messages, build_prompt_parts
 from .rules import review_with_mock_rules
 
+MAX_COMPLETION_TOKENS = 400
+
 
 class ReviewClient(ABC):
 
@@ -95,7 +97,7 @@ class OciSdkReviewClient(ReviewClient):
                 models.UserMessage(content=[models.TextContent(text=user_prompt)]),
             ],
             temperature=0,
-            max_tokens=400,
+            max_completion_tokens=MAX_COMPLETION_TOKENS,
         )
         chat_details = models.ChatDetails(
             compartment_id=self.compartment_id,
@@ -132,7 +134,7 @@ class OciOpenAiCompatibleReviewClient(ReviewClient):
             "model": self.model,
             "messages": build_messages(context),
             "temperature": 0,
-            "max_tokens": 400,
+            "max_completion_tokens": MAX_COMPLETION_TOKENS,
         }
         request = urllib.request.Request(
             self.endpoint,
