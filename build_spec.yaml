@@ -28,16 +28,19 @@ steps:
       mkdir -p dist
       export ARTIFACT_VERSION="run-$(date -u +%Y%m%d%H%M%S)"
       echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}"
-      python3 --version
-      if python3 -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("oci") else 1)'; then
-        python3 -c 'import oci; print("oci-sdk=present version=" + getattr(oci, "__version__", "unknown"))'
+      export PYTHON_BIN="$(command -v python3.11 || command -v python3)"
+      echo "PYTHON_BIN=${PYTHON_BIN}"
+      "${PYTHON_BIN}" --version
+      if "${PYTHON_BIN}" -c 'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec("oci") else 1)'; then
+        "${PYTHON_BIN}" -c 'import sys, oci; print("python_executable=" + sys.executable); print("oci-sdk=present version=" + getattr(oci, "__version__", "unknown"))'
       else
         echo "Installing OCI Python SDK from Oracle Linux repositories..."
         yum list python3.11-oci-sdk || true
         yum -y install python3.11-oci-sdk || \
         yum -y install --enablerepo=ol8_addons python3.11-oci-sdk || \
         yum -y install --enablerepo=ol8_developer python3.11-oci-sdk
-        python3 -c 'import oci; print("oci-sdk=installed version=" + getattr(oci, "__version__", "unknown"))'
+        export PYTHON_BIN="/usr/bin/python3.11"
+        "${PYTHON_BIN}" -c 'import sys, oci; print("python_executable=" + sys.executable); print("oci-sdk=installed version=" + getattr(oci, "__version__", "unknown"))'
       fi
 
   - type: Command
@@ -45,17 +48,20 @@ steps:
     command: |
       set -euo pipefail
       cd "${OCI_PRIMARY_SOURCE_DIR}"
+      export PYTHON_BIN="$(command -v python3.11 || command -v python3)"
+      echo "PYTHON_BIN=${PYTHON_BIN}"
+      "${PYTHON_BIN}" -c 'import sys, oci; print("python_executable=" + sys.executable); print("oci-sdk=available version=" + getattr(oci, "__version__", "unknown"))'
       echo "Working directory: $(pwd)"
       test -f docs/architecture-guidelines.md
       test -d src/main/java
       test -f tools/ai_review/main.py
-      python3 -m tools.ai_review.main \
+      "${PYTHON_BIN}" -m tools.ai_review.main \
         --guidelines docs/architecture-guidelines.md \
         --source-dir src/main/java \
         --output ai-review.json
       cp ai-review.json dist/ai-review.json
       cat ai-review.json
-      export AI_REVIEW_RESULT="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["result"])' ai-review.json)"
+      export AI_REVIEW_RESULT="$("${PYTHON_BIN}" -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["result"])' ai-review.json)"
 
   - type: Command
     name: "Gate native build"
