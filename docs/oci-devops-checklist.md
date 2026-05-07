@@ -140,16 +140,23 @@ Opcional:
 
 Se voce quiser persistir os arquivos no Artifact Registry alem dos outputs do Managed Build:
 
-- crie dois artifacts do tipo Generic Artifact
+- crie dois artifacts do tipo General artifact apontando para Artifact Registry
 - use nomes alinhados aos outputs do build:
   - `ai-review-json`
-  - `demo-bundle`
+  - `native-binary`
 - depois adicione um Deliver Artifacts stage
+
+Detalhe importante:
+
+- o build spec exporta `ARTIFACT_VERSION`
+- use `${ARTIFACT_VERSION}` como version nos dois artifacts do DevOps Project
+- mapeie `ai-review-json` para o artifact do JSON
+- mapeie `native-binary` para o artifact do binario nativo
 
 Observacao pragmatica:
 
 - para a demo ao vivo, o caminho mais simples continua sendo usar apenas o Managed Build Stage
-- adicione Deliver Artifacts somente quando quiser guardar os arquivos fora do build run
+- adicione Deliver Artifacts quando quiser guardar o binario nativo e o `ai-review.json` fora do build run
 
 ## 13. Auth modes da implementacao
 

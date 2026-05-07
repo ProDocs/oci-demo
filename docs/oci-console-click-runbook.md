@@ -263,7 +263,84 @@ O pipeline do repositorio ja esta preparado para:
 5. usar `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`
 6. gerar `dist/demo-bundle.zip`
 
-## 9. Trigger opcional para depois da validacao manual
+## 9. Salvar binario nativo e review no Artifact Registry
+
+Observacao importante:
+
+- o build gera um binario nativo, nao uma imagem Docker
+- para esta demo, o destino correto e `Artifact Registry` com artifacts genericos
+
+### 9.1 Crie ou reutilize um repositrio no Artifact Registry
+
+Caminho:
+
+- `Developer Services`
+- `Artifact Registry`
+- `Repositories`
+
+Crie um repositorio generic, por exemplo:
+
+- `oci-ai-review-demo-repo`
+
+### 9.2 Crie referencias de artifact dentro do DevOps Project
+
+Caminho:
+
+- `Developer Services`
+- `DevOps`
+- `Projects`
+- selecione `oci-ai-review-demo`
+- `Artifacts`
+- `Add artifact`
+
+Crie estes dois artifacts:
+
+1. Artifact do review JSON
+   - `Name`: `ai-review-json-artifact`
+   - `Type`: `General artifact`
+   - `Artifact source`: `Artifact Registry repository`
+   - `Repository`: `oci-ai-review-demo-repo`
+   - `Set Custom Location`
+   - `Path`: `oci-ai-review-demo/ai-review.json`
+   - `Version`: `${ARTIFACT_VERSION}`
+   - habilite parameterizacao
+
+2. Artifact do binario nativo
+   - `Name`: `native-binary-artifact`
+   - `Type`: `General artifact`
+   - `Artifact source`: `Artifact Registry repository`
+   - `Repository`: `oci-ai-review-demo-repo`
+   - `Set Custom Location`
+   - `Path`: `oci-ai-review-demo/oci-ai-review-demo`
+   - `Version`: `${ARTIFACT_VERSION}`
+   - habilite parameterizacao
+
+### 9.3 Adicione o Deliver Artifacts stage
+
+Caminho:
+
+- abra o pipeline `oci-ai-review-build`
+- clique no `+` depois do Managed Build stage
+- `Add stage`
+- tipo `Deliver Artifacts`
+
+Preencha assim:
+
+- `Stage name`: `deliver-build-artifacts`
+
+Associe os artifacts com os outputs do Managed Build:
+
+- artifact `ai-review-json-artifact` <- build output `ai-review-json`
+- artifact `native-binary-artifact` <- build output `native-binary`
+
+O `ARTIFACT_VERSION` vem do proprio build spec e sera mostrado como exported variable no build run.
+
+Resultado:
+
+- o `ai-review.json` vai para o Artifact Registry
+- o binario nativo `oci-ai-review-demo` vai para o Artifact Registry
+
+## 10. Trigger opcional para depois da validacao manual
 
 Crie o trigger apenas depois que os dois runs manuais estiverem funcionando.
 
@@ -295,7 +372,7 @@ Depois, no GitHub:
 - configure o secret informado pela OCI
 - `Content type`: `application/json`
 
-## 10. Ativando Oracle Generative AI real depois
+## 11. Ativando Oracle Generative AI real depois
 
 Depois que a demo mock estiver estavel, ative a integracao real.
 
@@ -315,7 +392,7 @@ OCI_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
 
 O restante do pipeline pode continuar igual.
 
-## 11. Ordem ideal da apresentacao
+## 12. Ordem ideal da apresentacao
 
 1. Mostre rapidamente o repositrio GitHub com os dois branches `demo-pass` e `demo-block`.
 2. Abra o pipeline no OCI DevOps.
@@ -325,7 +402,7 @@ O restante do pipeline pode continuar igual.
 6. Mostre o `BLOCK` e o fail fast antes da compilacao.
 7. Feche reforcando que o desperdicio de CI foi evitado.
 
-## 12. Se quiser manter a demo mais simples ainda
+## 13. Se quiser manter a demo mais simples ainda
 
 Nao adicione agora:
 

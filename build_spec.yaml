@@ -13,6 +13,7 @@ env:
   exportedVariables:
     - AI_REVIEW_RESULT
     - BUILD_OUTCOME
+    - ARTIFACT_VERSION
 
 steps:
   - type: Command
@@ -22,6 +23,8 @@ steps:
       cd "${OCI_PRIMARY_SOURCE_DIR}"
       echo "Working directory: $(pwd)"
       mkdir -p dist
+      export ARTIFACT_VERSION="run-$(date -u +%Y%m%d%H%M%S)"
+      echo "ARTIFACT_VERSION=${ARTIFACT_VERSION}"
       python3 --version
       python3 -c 'import importlib.util; print("oci-sdk=" + ("present" if importlib.util.find_spec("oci") else "missing"))'
 
@@ -132,6 +135,9 @@ outputArtifacts:
   - name: ai-review-json
     type: BINARY
     location: dist/ai-review.json
+  - name: native-binary
+    type: BINARY
+    location: target/oci-ai-review-demo
   - name: demo-bundle
     type: BINARY
     location: dist/demo-bundle.zip

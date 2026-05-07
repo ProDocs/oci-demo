@@ -9,8 +9,9 @@ Se o seu projeto DevOps ja esta conectado ao GitHub, use a conexao GitHub existe
 1. DevOps Project.
 2. Source connection para o repositorio Git que contem este projeto. No seu caso, reutilize a conexao GitHub ja existente.
 3. Build Pipeline com um Managed Build Stage apontando para `build_spec.yaml`.
-4. Artifact Registry com dois artifacts binarios:
+4. Artifact Registry com tres artifacts binarios:
    - `ai-review-json`
+   - `native-binary`
    - `demo-bundle`
 5. Notification Topic opcional para avisar quando um build PASS/WARN/BLOCK terminar.
 
@@ -44,9 +45,11 @@ Se o seu projeto DevOps ja esta conectado ao GitHub, use a conexao GitHub existe
 3. Geracao do JSON: `ai-review.json`.
 4. Gate do pipeline: `scripts/gate-ai-review.sh`.
 5. Build nativo: `mvn -Pnative -DskipTests package`.
-6. Publicacao de artifacts: `dist/ai-review.json` e `dist/demo-bundle.zip`.
+6. Publicacao de artifacts: `dist/ai-review.json`, `target/oci-ai-review-demo` e `dist/demo-bundle.zip`.
 
 Os steps de gate, instalacao do GraalVM e native build usam `onFailure` para ainda empacotar o bundle de demo quando o pipeline falha depois da revisao por IA.
+
+O build tambem exporta `ARTIFACT_VERSION`, para ser reutilizado em um `Deliver Artifacts` stage.
 
 ## Resource Principal para OCI DevOps
 
@@ -81,3 +84,4 @@ Se voce quiser simplificar o primeiro setup em sandbox, pode usar uma policy mai
 - Para rodar em uma OCI Compute fora do DevOps, use `OCI_GENAI_AUTH_MODE=instance_principal`.
 - O build spec instala o RPM `graalvm-21-native-image` e usa `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`.
 - No OCI DevOps Managed Build em Oracle Linux 8, o build spec tambem instala `glibc-static`, `libstdc++-static` e `zlib-static` com `--enablerepo=ol8_codeready_builder`, porque o RPM do `native-image` depende desses pacotes.
+- Para publicar no Artifact Registry, use um `Deliver Artifacts` stage mapeando os outputs `ai-review-json` e `native-binary` para artifacts genericos versionados com `${ARTIFACT_VERSION}`.
