@@ -64,7 +64,7 @@ Use o caminho mais seguro para a apresentacao:
 ```text
 AI_REVIEW_MODE=mock
 AI_REVIEW_SCENARIO=pass
-OCI_GENAI_AUTH_MODE=resource_principal
+AI_REVIEW_AUTH_MODE=resource_principal
 JAVA_HOME=/usr/lib64/graalvm/graalvm-java21
 ```
 
@@ -79,10 +79,10 @@ Quando sair do mock:
 
 ```text
 AI_REVIEW_MODE=oci
-OCI_GENAI_AUTH_MODE=resource_principal
-OCI_GENAI_INFERENCE_ENDPOINT=https://inference.generativeai.<regiao>.oci.oraclecloud.com
-OCI_GENAI_COMPARTMENT_OCID=<compartment_ocid>
-OCI_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
+AI_REVIEW_AUTH_MODE=resource_principal
+AI_REVIEW_GENAI_INFERENCE_ENDPOINT=https://inference.generativeai.<regiao>.oci.oraclecloud.com
+AI_REVIEW_GENAI_COMPARTMENT_OCID=<compartment_ocid>
+AI_REVIEW_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
 JAVA_HOME=/usr/lib64/graalvm/graalvm-java21
 ```
 

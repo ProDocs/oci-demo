@@ -384,10 +384,10 @@ Nesse branch, ajuste os defaults de ambiente do `build_spec.yaml` para:
 
 ```text
 AI_REVIEW_MODE=oci
-OCI_GENAI_AUTH_MODE=resource_principal
-OCI_GENAI_INFERENCE_ENDPOINT=https://inference.generativeai.<regiao>.oci.oraclecloud.com
-OCI_GENAI_COMPARTMENT_OCID=<compartment_ocid>
-OCI_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
+AI_REVIEW_AUTH_MODE=resource_principal
+AI_REVIEW_GENAI_INFERENCE_ENDPOINT=https://inference.generativeai.<regiao>.oci.oraclecloud.com
+AI_REVIEW_GENAI_COMPARTMENT_OCID=<compartment_ocid>
+AI_REVIEW_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
 ```
 
 O restante do pipeline pode continuar igual.

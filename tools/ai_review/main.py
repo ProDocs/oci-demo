@@ -19,6 +19,14 @@ DEFAULT_INSTRUCTION = (
 )
 
 
+def _env_first(*names: str, default: str = "") -> str:
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return default
+
+
 def main() -> int:
     parser = _build_argument_parser()
     args = parser.parse_args()
@@ -71,13 +79,16 @@ def _build_client(args: argparse.Namespace):
 
     if auth_mode == "api_key":
         endpoint = _resolve_openai_compatible_endpoint(args.endpoint, args.base_url)
-        api_key = args.api_key or os.getenv("OCI_GENAI_API_KEY", "")
+        api_key = args.api_key or _env_first("AI_REVIEW_GENAI_API_KEY", "OCI_GENAI_API_KEY")
         if not endpoint:
-            raise ValueError("Defina OCI_GENAI_ENDPOINT ou OCI_GENAI_BASE_URL para usar auth_mode=api_key.")
+            raise ValueError(
+                "Defina AI_REVIEW_GENAI_ENDPOINT ou AI_REVIEW_GENAI_BASE_URL "
+                "para usar auth_mode=api_key."
+            )
         if not api_key:
-            raise ValueError("Defina OCI_GENAI_API_KEY para usar auth_mode=api_key.")
+            raise ValueError("Defina AI_REVIEW_GENAI_API_KEY para usar auth_mode=api_key.")
         if not model:
-            raise ValueError("Defina OCI_GENAI_MODEL para usar o modo oci.")
+            raise ValueError("Defina AI_REVIEW_GENAI_MODEL para usar o modo oci.")
 
         return OciOpenAiCompatibleReviewClient(
             endpoint=endpoint,
@@ -87,7 +98,7 @@ def _build_client(args: argparse.Namespace):
 
     if auth_mode not in {"resource_principal", "instance_principal", "user_principal"}:
         raise ValueError(
-            "OCI_GENAI_AUTH_MODE deve ser resource_principal, instance_principal, "
+            "AI_REVIEW_AUTH_MODE deve ser resource_principal, instance_principal, "
             "user_principal ou api_key."
         )
 
@@ -100,14 +111,14 @@ def _build_client(args: argparse.Namespace):
 
     if not inference_endpoint:
         raise ValueError(
-            "Defina OCI_GENAI_INFERENCE_ENDPOINT para usar IAM auth no OCI Generative AI."
+            "Defina AI_REVIEW_GENAI_INFERENCE_ENDPOINT para usar IAM auth no OCI Generative AI."
         )
     if not compartment_id:
         raise ValueError(
-            "Defina OCI_GENAI_COMPARTMENT_OCID para usar IAM auth no OCI Generative AI."
+            "Defina AI_REVIEW_GENAI_COMPARTMENT_OCID para usar IAM auth no OCI Generative AI."
         )
     if not model:
-        raise ValueError("Defina OCI_GENAI_MODEL para usar o modo oci.")
+        raise ValueError("Defina AI_REVIEW_GENAI_MODEL para usar o modo oci.")
 
     return OciSdkReviewClient(
         inference_endpoint=inference_endpoint,
@@ -160,17 +171,21 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scenario", default=os.getenv("AI_REVIEW_SCENARIO", "auto"), help="pass, warn, block ou auto.")
     parser.add_argument(
         "--auth-mode",
-        default=os.getenv("OCI_GENAI_AUTH_MODE", "resource_principal"),
+        default=_env_first("AI_REVIEW_AUTH_MODE", "OCI_GENAI_AUTH_MODE", default="resource_principal"),
         help="resource_principal, instance_principal, user_principal ou api_key.",
     )
     parser.add_argument(
         "--inference-endpoint",
-        default=os.getenv("OCI_GENAI_INFERENCE_ENDPOINT", ""),
+        default=_env_first("AI_REVIEW_GENAI_INFERENCE_ENDPOINT", "OCI_GENAI_INFERENCE_ENDPOINT"),
         help="Endpoint raiz do OCI Generative AI Inference, sem /openai/v1.",
     )
     parser.add_argument(
         "--compartment-id",
-        default=os.getenv("OCI_GENAI_COMPARTMENT_OCID", os.getenv("OCI_GENAI_COMPARTMENT_ID", "")),
+        default=_env_first(
+            "AI_REVIEW_GENAI_COMPARTMENT_OCID",
+            "OCI_GENAI_COMPARTMENT_OCID",
+            "OCI_GENAI_COMPARTMENT_ID",
+        ),
         help="Compartment OCID usado na chamada de chat do OCI Generative AI.",
     )
     parser.add_argument(
@@ -183,10 +198,26 @@ def _build_argument_parser() -> argparse.ArgumentParser:
         default=os.getenv("OCI_CONFIG_PROFILE", "DEFAULT"),
         help="Profile OCI usado com user_principal.",
     )
-    parser.add_argument("--endpoint", default=os.getenv("OCI_GENAI_ENDPOINT", ""), help="Endpoint completo do chat completions.")
-    parser.add_argument("--base-url", default=os.getenv("OCI_GENAI_BASE_URL", ""), help="Base URL OCI GenAI compativel com OpenAI.")
-    parser.add_argument("--api-key", default=os.getenv("OCI_GENAI_API_KEY", ""), help="API key OCI GenAI.")
-    parser.add_argument("--model", default=os.getenv("OCI_GENAI_MODEL", ""), help="Modelo OCI GenAI.")
+    parser.add_argument(
+        "--endpoint",
+        default=_env_first("AI_REVIEW_GENAI_ENDPOINT", "OCI_GENAI_ENDPOINT"),
+        help="Endpoint completo do chat completions.",
+    )
+    parser.add_argument(
+        "--base-url",
+        default=_env_first("AI_REVIEW_GENAI_BASE_URL", "OCI_GENAI_BASE_URL"),
+        help="Base URL OCI GenAI compativel com OpenAI.",
+    )
+    parser.add_argument(
+        "--api-key",
+        default=_env_first("AI_REVIEW_GENAI_API_KEY", "OCI_GENAI_API_KEY"),
+        help="API key OCI GenAI.",
+    )
+    parser.add_argument(
+        "--model",
+        default=_env_first("AI_REVIEW_GENAI_MODEL", "OCI_GENAI_MODEL"),
+        help="Modelo OCI GenAI.",
+    )
     return parser
 
 

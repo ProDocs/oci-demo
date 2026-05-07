@@ -204,10 +204,10 @@ Quando quiser trocar o mock por integracao real no OCI DevOps, configure as vari
 
 ```bash
 export AI_REVIEW_MODE=oci
-export OCI_GENAI_AUTH_MODE=resource_principal
-export OCI_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
-export OCI_GENAI_COMPARTMENT_OCID="<compartment-ocid-do-genai>"
-export OCI_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci.oraclecloud.com"
+export AI_REVIEW_AUTH_MODE=resource_principal
+export AI_REVIEW_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
+export AI_REVIEW_GENAI_COMPARTMENT_OCID="<compartment-ocid-do-genai>"
+export AI_REVIEW_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci.oraclecloud.com"
 ```
 
 ### Rodando localmente com autenticacao OCI
@@ -215,11 +215,11 @@ export OCI_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci
 ```bash
 python3 -m pip install oci
 export AI_REVIEW_MODE=oci
-export OCI_GENAI_AUTH_MODE=user_principal
+export AI_REVIEW_AUTH_MODE=user_principal
 export OCI_CONFIG_PROFILE=DEFAULT
-export OCI_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
-export OCI_GENAI_COMPARTMENT_OCID="<compartment-ocid-do-genai>"
-export OCI_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci.oraclecloud.com"
+export AI_REVIEW_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
+export AI_REVIEW_GENAI_COMPARTMENT_OCID="<compartment-ocid-do-genai>"
+export AI_REVIEW_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci.oraclecloud.com"
 ```
 
 ### Como provar que a LLM real foi executada
@@ -236,7 +236,7 @@ Quando o pipeline estiver em modo real, o log do step `AI architecture review` p
 
 Se voce ainda vir `client=mock`, entao a LLM real nao foi chamada.
 
-Para uma prova negativa controlada, troque temporariamente `OCI_GENAI_MODEL` por um valor invalido. O esperado e:
+Para uma prova negativa controlada, troque temporariamente `AI_REVIEW_GENAI_MODEL` por um valor invalido. O esperado e:
 
 - o step de IA falhar antes do build nativo
 - `ai-review.json` continuar sendo gerado
@@ -250,11 +250,13 @@ Se voce realmente quiser manter o caminho antigo por API key:
 
 ```bash
 export AI_REVIEW_MODE=oci
-export OCI_GENAI_AUTH_MODE=api_key
-export OCI_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
-export OCI_GENAI_BASE_URL="https://inference.generativeai.<regiao>.oci.oraclecloud.com/openai/v1"
-export OCI_GENAI_API_KEY="<api-key>"
+export AI_REVIEW_AUTH_MODE=api_key
+export AI_REVIEW_GENAI_MODEL="<modelo-disponivel-na-sua-regiao>"
+export AI_REVIEW_GENAI_BASE_URL="https://inference.generativeai.<regiao>.oci.oraclecloud.com/openai/v1"
+export AI_REVIEW_GENAI_API_KEY="<api-key>"
 ```
+
+Observacao: por compatibilidade, o codigo ainda aceita os nomes legados `OCI_GENAI_*`, mas para OCI DevOps o recomendado agora e usar o prefixo `AI_REVIEW_*`.
 
 ## Assuncoes pragmaticas
 

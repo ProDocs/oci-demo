@@ -28,14 +28,14 @@ Se o seu projeto DevOps ja esta conectado ao GitHub, use a conexao GitHub existe
 | --- | --- |
 | `AI_REVIEW_MODE` | `mock` para demo deterministica, `oci` para chamada real ao Oracle Generative AI |
 | `AI_REVIEW_SCENARIO` | `auto`, `pass`, `warn` ou `block` |
-| `OCI_GENAI_AUTH_MODE` | `resource_principal`, `instance_principal`, `user_principal` ou `api_key` |
-| `OCI_GENAI_INFERENCE_ENDPOINT` | Endpoint raiz do Inference API, sem `/openai/v1` |
-| `OCI_GENAI_COMPARTMENT_OCID` | Compartment OCID usado na chamada de chat |
+| `AI_REVIEW_AUTH_MODE` | `resource_principal`, `instance_principal`, `user_principal` ou `api_key` |
+| `AI_REVIEW_GENAI_INFERENCE_ENDPOINT` | Endpoint raiz do Inference API, sem `/openai/v1` |
+| `AI_REVIEW_GENAI_COMPARTMENT_OCID` | Compartment OCID usado na chamada de chat |
 | `OCI_CONFIG_PROFILE` | Profile OCI usado com `user_principal` |
-| `OCI_GENAI_BASE_URL` | Base URL OpenAI-compatible, apenas para o fallback `api_key` |
-| `OCI_GENAI_ENDPOINT` | Endpoint completo do chat completions, apenas para o fallback `api_key` |
-| `OCI_GENAI_MODEL` | Modelo Oracle Generative AI a ser usado |
-| `OCI_GENAI_API_KEY` | API key do Oracle Generative AI, apenas para fallback legado |
+| `AI_REVIEW_GENAI_BASE_URL` | Base URL OpenAI-compatible, apenas para o fallback `api_key` |
+| `AI_REVIEW_GENAI_ENDPOINT` | Endpoint completo do chat completions, apenas para o fallback `api_key` |
+| `AI_REVIEW_GENAI_MODEL` | Modelo Oracle Generative AI a ser usado |
+| `AI_REVIEW_GENAI_API_KEY` | API key do Oracle Generative AI, apenas para fallback legado |
 | `JAVA_HOME` | Caminho do Oracle GraalVM for JDK 21 no build runner |
 
 ## Mapeamento do fluxo
@@ -56,8 +56,8 @@ O build tambem exporta `ARTIFACT_VERSION`, para ser reutilizado em um `Deliver A
 Para usar o modo recomendado no Managed Build:
 
 1. Defina `AI_REVIEW_MODE=oci`.
-2. Defina `OCI_GENAI_AUTH_MODE=resource_principal`.
-3. Informe `OCI_GENAI_INFERENCE_ENDPOINT`, `OCI_GENAI_COMPARTMENT_OCID` e `OCI_GENAI_MODEL`.
+2. Defina `AI_REVIEW_AUTH_MODE=resource_principal`.
+3. Informe `AI_REVIEW_GENAI_INFERENCE_ENDPOINT`, `AI_REVIEW_GENAI_COMPARTMENT_OCID` e `AI_REVIEW_GENAI_MODEL`.
 4. Garanta que o build pipeline esteja em um dynamic group.
 5. Adicione a policy minima para o pipeline chamar o chat do Generative AI.
 
@@ -79,9 +79,9 @@ Se voce quiser simplificar o primeiro setup em sandbox, pode usar uma policy mai
 ## Observacoes pragmaticas
 
 - Para a demo ao vivo, use `AI_REVIEW_MODE=mock` e altere apenas `AI_REVIEW_SCENARIO`.
-- Para a demo real com Oracle Generative AI no OCI DevOps, mude para `AI_REVIEW_MODE=oci`, `OCI_GENAI_AUTH_MODE=resource_principal` e preencha endpoint, compartment e modelo.
-- Para rodar localmente na sua maquina, prefira `OCI_GENAI_AUTH_MODE=user_principal`.
-- Para rodar em uma OCI Compute fora do DevOps, use `OCI_GENAI_AUTH_MODE=instance_principal`.
+- Para a demo real com Oracle Generative AI no OCI DevOps, mude para `AI_REVIEW_MODE=oci`, `AI_REVIEW_AUTH_MODE=resource_principal` e preencha endpoint, compartment e modelo.
+- Para rodar localmente na sua maquina, prefira `AI_REVIEW_AUTH_MODE=user_principal`.
+- Para rodar em uma OCI Compute fora do DevOps, use `AI_REVIEW_AUTH_MODE=instance_principal`.
 - O build spec instala o RPM `graalvm-21-native-image` e usa `JAVA_HOME=/usr/lib64/graalvm/graalvm-java21`.
 - No OCI DevOps Managed Build em Oracle Linux 8, o build spec tambem instala `glibc-static`, `libstdc++-static` e `zlib-static` com `--enablerepo=ol8_codeready_builder`, porque o RPM do `native-image` depende desses pacotes.
 - Para publicar no Artifact Registry, use um `Deliver Artifacts` stage mapeando os outputs `ai-review-json` e `native-binary` para artifacts genericos versionados com `${ARTIFACT_VERSION}`.
