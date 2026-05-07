@@ -62,6 +62,9 @@ steps:
     command: |
       set -euo pipefail
       cd "${OCI_PRIMARY_SOURCE_DIR}"
+      cat /etc/os-release
+      yum repolist
+      yum list "graalvm-21*" || true
       yum -y install graalvm-21-native-image
     onFailure:
       - type: Command
