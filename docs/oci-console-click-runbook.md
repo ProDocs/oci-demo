@@ -392,6 +392,18 @@ OCI_GENAI_MODEL=<modelo-disponivel-na-sua-regiao>
 
 O restante do pipeline pode continuar igual.
 
+Quando voce rodar esse branch, abra o log do step `AI architecture review` e confirme estas linhas:
+
+```text
+[AI_REVIEW] mode=oci auth_mode=resource_principal ...
+[AI_REVIEW] client=oci-sdk auth_mode=resource_principal ...
+[AI_REVIEW] invoking OCI Generative AI chat
+[AI_REVIEW] oci_response status=200 opc_request_id=<valor-retornado-pelo-servico>
+[AI_REVIEW] OCI Generative AI chat completed
+```
+
+Esse `opc_request_id` e a melhor evidencia de apresentacao de que a chamada saiu do runner e chegou ao servico real do Oracle Generative AI.
+
 ## 12. Ordem ideal da apresentacao
 
 1. Mostre rapidamente o repositrio GitHub com os dois branches `demo-pass` e `demo-block`.

@@ -222,6 +222,28 @@ export OCI_GENAI_COMPARTMENT_OCID="<compartment-ocid-do-genai>"
 export OCI_GENAI_INFERENCE_ENDPOINT="https://inference.generativeai.<regiao>.oci.oraclecloud.com"
 ```
 
+### Como provar que a LLM real foi executada
+
+Quando o pipeline estiver em modo real, o log do step `AI architecture review` precisa mostrar estas linhas:
+
+```text
+[AI_REVIEW] mode=oci auth_mode=resource_principal ...
+[AI_REVIEW] client=oci-sdk auth_mode=resource_principal ...
+[AI_REVIEW] invoking OCI Generative AI chat
+[AI_REVIEW] oci_response status=200 opc_request_id=<valor-retornado-pelo-servico>
+[AI_REVIEW] OCI Generative AI chat completed
+```
+
+Se voce ainda vir `client=mock`, entao a LLM real nao foi chamada.
+
+Para uma prova negativa controlada, troque temporariamente `OCI_GENAI_MODEL` por um valor invalido. O esperado e:
+
+- o step de IA falhar antes do build nativo
+- `ai-review.json` continuar sendo gerado
+- o comentario do JSON mencionar a falha de chamada ao OCI Generative AI
+
+Depois disso, volte para o modelo correto.
+
 ### Fallback por API key
 
 Se voce realmente quiser manter o caminho antigo por API key:

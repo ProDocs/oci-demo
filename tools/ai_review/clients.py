@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
@@ -23,6 +24,12 @@ class MockReviewClient(ReviewClient):
         self.scenario = (scenario or "auto").upper()
 
     def review(self, context: ReviewContext) -> ReviewPayload:
+        print(
+            f"[AI_REVIEW] client=mock scenario={self.scenario} "
+            f"source_files={len(context.source_files)}",
+            file=sys.stderr,
+            flush=True,
+        )
         if self.scenario == "PASS":
             return ReviewPayload.from_values(
                 "PASS",
@@ -61,6 +68,15 @@ class OciSdkReviewClient(ReviewClient):
         self.config_profile = config_profile
 
     def review(self, context: ReviewContext) -> ReviewPayload:
+        print(
+            "[AI_REVIEW] client=oci-sdk "
+            f"auth_mode={self.auth_mode} "
+            f"model={self.model} "
+            f"inference_endpoint={self.inference_endpoint} "
+            f"source_files={len(context.source_files)}",
+            file=sys.stderr,
+            flush=True,
+        )
         oci = _import_oci_sdk()
         client = _build_oci_inference_client(
             oci=oci,
@@ -87,7 +103,10 @@ class OciSdkReviewClient(ReviewClient):
             chat_request=chat_request,
         )
 
+        print("[AI_REVIEW] invoking OCI Generative AI chat", file=sys.stderr, flush=True)
         response = client.chat(chat_details)
+        _log_oci_sdk_response_metadata(response)
+        print("[AI_REVIEW] OCI Generative AI chat completed", file=sys.stderr, flush=True)
         assistant_text = _extract_text_from_oci_sdk_response(response.data)
         return _parse_review_payload(assistant_text)
 
@@ -101,6 +120,14 @@ class OciOpenAiCompatibleReviewClient(ReviewClient):
         self.timeout_seconds = timeout_seconds
 
     def review(self, context: ReviewContext) -> ReviewPayload:
+        print(
+            "[AI_REVIEW] client=oci-openai-compatible "
+            f"model={self.model} "
+            f"endpoint={self.endpoint} "
+            f"source_files={len(context.source_files)}",
+            file=sys.stderr,
+            flush=True,
+        )
         payload = {
             "model": self.model,
             "messages": build_messages(context),
@@ -118,8 +145,11 @@ class OciOpenAiCompatibleReviewClient(ReviewClient):
         )
 
         try:
+            print("[AI_REVIEW] invoking OCI OpenAI-compatible chat", file=sys.stderr, flush=True)
             with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
+                _log_openai_compatible_response_metadata(response)
                 raw_body = response.read().decode("utf-8")
+            print("[AI_REVIEW] OCI OpenAI-compatible chat completed", file=sys.stderr, flush=True)
         except urllib.error.HTTPError as exc:
             error_body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"OCI GenAI retornou HTTP {exc.code}: {error_body}") from exc
@@ -236,6 +266,38 @@ def _extract_text_from_oci_sdk_response(chat_result) -> str:
             return "\n".join(text_parts)
 
     raise RuntimeError("Nao foi possivel extrair texto da resposta OCI SDK.")
+
+
+def _log_oci_sdk_response_metadata(response) -> None:
+    status = getattr(response, "status", None)
+    request_id = getattr(response, "request_id", None)
+    headers = getattr(response, "headers", None) or {}
+
+    if not request_id and isinstance(headers, dict):
+        for key, value in headers.items():
+            if str(key).lower() == "opc-request-id":
+                request_id = value
+                break
+
+    print(
+        "[AI_REVIEW] oci_response "
+        f"status={status if status is not None else '<unknown>'} "
+        f"opc_request_id={request_id or '<missing>'}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+
+def _log_openai_compatible_response_metadata(response) -> None:
+    status = getattr(response, "status", None)
+    request_id = response.headers.get("opc-request-id", "")
+    print(
+        "[AI_REVIEW] oci_response "
+        f"status={status if status is not None else '<unknown>'} "
+        f"opc_request_id={request_id or '<missing>'}",
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 def _parse_review_payload(raw_text: str) -> ReviewPayload:

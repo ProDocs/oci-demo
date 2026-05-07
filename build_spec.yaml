@@ -6,7 +6,7 @@ shell: bash
 
 env:
   variables:
-    AI_REVIEW_MODE: "mock"
+    AI_REVIEW_MODE: "oci"
     AI_REVIEW_SCENARIO: "auto"
     OCI_GENAI_AUTH_MODE: "resource_principal"
     JAVA_HOME: "/usr/lib64/graalvm/graalvm-java21"

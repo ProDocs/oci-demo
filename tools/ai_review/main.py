@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
 from .clients import MockReviewClient, OciOpenAiCompatibleReviewClient, OciSdkReviewClient
@@ -41,6 +42,14 @@ def main() -> int:
 
 
 def _execute_review(args: argparse.Namespace) -> ReviewPayload:
+    print(
+        "[AI_REVIEW] mode="
+        f"{args.mode.lower()} auth_mode={args.auth_mode.lower()} "
+        f"model={args.model or '<unset>'} "
+        f"inference_endpoint={args.inference_endpoint or '<unset>'}",
+        file=sys.stderr,
+        flush=True,
+    )
     client = _build_client(args)
     engine = ReviewEngine(client)
     return engine.run(
